@@ -330,20 +330,80 @@ def get_consistent_timebase_with_NaNs(station_neighbor_data):
         station_neighbor_data[station]['data'] = station_data_reindexed
     return station_neighbor_data
 
+def neighbor_data_multiplot(cut_beginning, cut_end, cut_width_deg_total,
+                            station_neighbor_data_consistent_timebase_with_NaNs):
+    station_position_dict = {} # keys: station name, lat, long, and distance along cut
+    # for the distance along the cut, we need to project the station position onto the cut line.
+    # the beginning of the cut is 0 and the end of the cut is 1.
+    cut_vector = (cut_end[0] - cut_beginning[0], cut_end[1] - cut_beginning[1])  # (delta_long, delta_lat)
+    cut_length_squared = cut_vector[0]**2 + cut_vector[1]**2
+    for station, station_info in station_neighbor_data_consistent_timebase_with_NaNs.items():
+        if station == 'station_name':
+            continue
+        lat, long = station_info['lat_long']
+        station_position_dict[station] = {'lat': lat, 'long': long}
+        # vector from cut beginning to station
+        station_vector = (long - cut_beginning[0], lat - cut_beginning[1])
+        # project station_vector onto cut_vector
+        projection_length = (station_vector[0] * cut_vector[0] + station_vector[1] * cut_vector[1]) / cut_length_squared
+        station_position_dict[station]['distance_along_cut'] = projection_length
+    x = 2
+
+    # the rectangular area of interest is defined by the cut line and the cut width.
+    # we want to remove stations that are outside this area from the station_position_dict
+    stations_to_remove = []
+    for station, pos_info in station_position_dict.items():
+        distance_along_cut = pos_info['distance_along_cut']
+        if distance_along_cut < 0 or distance_along_cut > 1:
+            stations_to_remove.append(station)
+            continue
+        # calculate perpendicular distance from cut line
+        lat, long = pos_info['lat'], pos_info['long']
+        # vector from cut beginning to station
+        station_vector = (long - cut_beginning[0], lat - cut_beginning[1])
+        # projection length already calculated
+        projection_length = pos_info['distance_along_cut']
+        # projected point on cut line
+        projected_point = (cut_beginning[0] + projection_length * cut_vector[0],
+                            cut_beginning[1] + projection_length * cut_vector[1])
+        # perpendicular vector
+        perp_vector = (long - projected_point[0], lat - projected_point[1])
+        perp_distance = (perp_vector[0]**2 + perp_vector[1]**2)**0.5
+        if perp_distance > (cut_width_deg_total / 2):
+            stations_to_remove.append(station)
+
+    for station in stations_to_remove:
+        del station_position_dict[station]
+    
+    # let's plot the change in North (m) over time.  This will be a custom plot.
+    # The x-axis will represent two things:
+    #   - distance along the cut line (from 0 to 1), with 0 on the far left and 1 on the far right
+    #   - displacement in North (m).  The line extending from the x-axis to the first datapoint
+    #   should be dashed and be vertical along the cut line.
+    # The y-axis will represent time (Days_Since_Epoch).
+    #   Note that there are some times for which North (m) is NaN.
+    # The data points will be colored based on the station they belong to.
+    # Each displacement plot should be scaled so it is somewhat
+    #    small on the x-axis since there may be many stations.
+    
+    
+    x = 2
+
 if __name__ == "__main__":
     station_table_ver = 'v1.1' # version of the station locations and velocities table to use.
                             # If you change this, you need to re-download the station data file and re-process it.
     only_process_the_first_file_in_database = False # for testing purposes, only process the first file in the earthquake database
     process_files_in_database = False   # set to True to process all files in the earthquake database
 
-    get_station_neighbor_data = True        # set to True to collect data for a single station and its neighbors
+    get_station_neighbor_data = False        # set to True to collect data for a single station and its neighbors
     get_station_by_lat_long = False         # set to True to find the closest station to the given lat/long.
                                             # If False, use station_to_collect variable.
 
-    dump_neighbor_data_to_file = True       # set to True to dump the collected station and neighbor data to a file
+    dump_neighbor_data_to_file = False       # set to True to dump the collected station and neighbor data to a file
                                             # the file will be named station_[station_name]_and_neighbors_data.csv
     read_neighbor_data_from_file = True    # set to True to read the station and neighbor data back from file   
 
+    make_multiplot_of_neighbor_data = True  # set to True to make a multiplot of the neighbor data after reading from file
 
     lat = 37.3382       # if get_station_by_lat_long is True, specify the latitude here
     long = -121.8863
@@ -406,8 +466,19 @@ if __name__ == "__main__":
     if read_neighbor_data_from_file:
         print('Reading station and neighbor data back from file...')
         output_filename = f'station_{station_to_collect}_and_neighbors_data.csv'
-        data_read_back_in = read_data_from_file(output_filename)
-        x = 2
+        station_neighbor_data_consistent_timebase_with_NaNs = read_data_from_file(output_filename)
+    x = 2
+
+    if make_multiplot_of_neighbor_data:
+        
+
+        # let's assume cartesian plotting for now.
+        cut_beginning = (-122.389961, 37.5)  # (long, lat) of beginning cut point
+        cut_end = (-121.283277, 36.9)      # (long, lat) of ending cut point
+        cut_width_deg_total = 0.5  # total width of cut in degrees
+
+        neighbor_data_multiplot(cut_beginning, cut_end, cut_width_deg_total,
+                                station_neighbor_data_consistent_timebase_with_NaNs)
 
     print('All processing complete.')
     x = 2
