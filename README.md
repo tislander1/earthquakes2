@@ -1,8 +1,10 @@
 # earthquakes2
 
-Try using read_data_from_file(output_filename) where output_filename is station_LUTZ_and_neighbors_data.csv.
+- Try using read_data_from_file(output_filename) where output_filename is station_LUTZ_and_neighbors_data.csv.
+- This will load a data structure with time series for Communication Hill CA and its 50 closest stations.
+- The intended application is to predict a time series, given the other time series.
 
-Data source was from JPL's GNSS Time Series and was found using the command in the documentation folder:
+The data source was JPL's GNSS Time Series, and it was found using the command (found in the documentation folder):
 wget -r -nd -np -R "index.html*" -A "*.series" "https://sideshow.jpl.nasa.gov/pub/JPL_GPS_Timeseries/repro2018a/post/point"
 
 This was processed using the process_dataset.py script.
