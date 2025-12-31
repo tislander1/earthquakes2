@@ -8,6 +8,7 @@ wget -r -nd -np -R "index.html*" -A "*.series" "https://sideshow.jpl.nasa.gov/pu
 This was processed using the process_dataset.py script.
 
 Settings:
+
     station_table_ver = 'v1.1' # version of the station locations and velocities table to use.
                             # If you change this, you need to re-download the station data file and re-process it.
     only_process_the_first_file_in_database = False # for testing purposes, only process the first file in the earthquake database
@@ -16,12 +17,9 @@ Settings:
     get_station_neighbor_data = True        # set to True to collect data for a single station and its neighbors
     get_station_by_lat_long = False         # set to True to find the closest station to the given lat/long.
                                             # If False, use station_to_collect variable.
-
     dump_neighbor_data_to_file = True       # set to True to dump the collected station and neighbor data to a file
                                             # the file will be named station_[station_name]_and_neighbors_data.csv
     read_neighbor_data_from_file = True    # set to True to read the station and neighbor data back from file   
-
-
     lat = 37.3382       # if get_station_by_lat_long is True, specify the latitude here
     long = -121.8863
     station_to_collect = 'LUTZ' # if get_station_by_lat_long is False, specify the station name here
