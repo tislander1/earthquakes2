@@ -387,29 +387,35 @@ def neighbor_data_multiplot(cut_beginning, cut_end, cut_width_deg_total,
     #    small on the x-axis since there may be many stations.
     import matplotlib.pyplot as plt
     
-    scale = 0.2  # scale factor for North displacement to keep it small on x-axis
+    scale_North = 0.2  # scale factor for North displacement to keep it small on x-axis
+    scale_East = 0.2 # scale factor for East displacement to keep it small on x-axis
     plt.figure(figsize=(12, 8))
     colors = plt.cm.tab10.colors
     for i, (station, pos_info) in enumerate(station_position_dict.items()):
         color = colors[i % len(colors)]
         distance_along_cut = pos_info['distance_along_cut']
         data = station_neighbor_data_consistent_timebase_with_NaNs[station]['data']
+
+        epoch_beginning = 1994.04383562
+        days_per_year = 365.2425
+        data['years_scaled'] = (data['Days_Since_Epoch'] / days_per_year) + epoch_beginning # clean up to remove magic numbers
+
         valid_data = data.dropna(subset=['North (m)'])
         if not valid_data.empty:
             first_row = valid_data.iloc[0]
-            min_y = data['Days_Since_Epoch'].min()
+            min_y = data['years_scaled'].min()
             # Draw dashed vertical line from x-axis (min_y) to first datapoint
-            plt.plot([distance_along_cut, distance_along_cut], [min_y, first_row['Days_Since_Epoch']], 'k--', linewidth=1)
+            plt.plot([distance_along_cut, distance_along_cut], [min_y, first_row['years_scaled']], 'k--', linewidth=1)
             # Plot data points: x = distance_along_cut + North * scale, y = Days_Since_Epoch
-            shift = first_row['North (m)'] * scale
-            x_vals = distance_along_cut + (valid_data['North (m)'] - first_row['North (m)']) * scale
-            y_vals = valid_data['Days_Since_Epoch']
+            shift = first_row['North (m)'] * scale_North
+            x_vals = distance_along_cut + (valid_data['North (m)'] - first_row['North (m)']) * scale_North
+            y_vals = valid_data['years_scaled']
             plt.scatter(x_vals, y_vals, color=color, s=1)
             # Add sideways label on x-axis
             plt.text(distance_along_cut, min_y - 100, station, rotation=90, ha='center', va='top', fontsize=8)
     
     plt.xlabel('Distance along cut (0-1) / North displacement (scaled)')
-    plt.ylabel('Days Since Epoch')
+    plt.ylabel('Year')
     plt.title('Change in North (m) over time for stations along cut')
     plt.tight_layout()
     plt.savefig('north_displacement_plot.png', dpi=300)
