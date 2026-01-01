@@ -428,10 +428,13 @@ def neighbor_data_multiplot(cut_beginning, cut_end, cut_width_deg_total,
     # Each displacement plot should be scaled so it is somewhat
     #    small on the x-axis since there may be many stations.
     cut_description = 'Dist along cut ' + str(cut_beginning) + ' to ' + str(cut_end)
+
+    # cut width:
+    cut_width_string = f"{cut_width_deg_total:.2f}"
     
-    plot_component('North (m)', 0.2, 'Change in North (m) over time for stations along cut', cut_description + ' / North displacement (scaled)', 'north_displacement_plot.png')
-    plot_component('East (m)', 0.2, 'Change in East (m) over time for stations along cut', cut_description + ' / East displacement (scaled)', 'east_displacement_plot.png')
-    plot_component('Vertical (m)', 1.0, 'Change in Vertical (m) over time for stations along cut', cut_description + ' / Vertical displacement (scaled)', 'vertical_displacement_plot.png')
+    plot_component('North (m)', 0.2, 'Change in North (m) over time for stations along '+ cut_width_string + ' deg wide cut', cut_description + ' / North displacement (scaled)', 'north_displacement_plot.png')
+    plot_component('East (m)', 0.2, 'Change in East (m) over time for stations along '+ cut_width_string + ' deg wide cut', cut_description + ' / East displacement (scaled)', 'east_displacement_plot.png')
+    plot_component('Vertical (m)', 1.0, 'Change in Vertical (m) over time for stations along '+ cut_width_string + ' deg wide cut', cut_description + ' / Vertical displacement (scaled)', 'vertical_displacement_plot.png')
     
     x = 2
 
@@ -516,12 +519,27 @@ if __name__ == "__main__":
     x = 2
 
     if make_multiplot_of_neighbor_data:
-        
+
+        main_station_name = station_neighbor_data_consistent_timebase_with_NaNs['station_name']
+        main_station_lat_long = station_neighbor_data_consistent_timebase_with_NaNs[main_station_name]['lat_long']
+        min_long = 500; max_long = -500; min_lat = 500; max_lat = -500
+        for item in station_neighbor_data_consistent_timebase_with_NaNs.items():
+            # find min_latitude, max_latitude, min_longitude, max_longitude
+            if item[0] == 'station_name':
+                continue
+            min_long = min(min_long, item[1]['lat_long'][1])
+            max_long = max(max_long, item[1]['lat_long'][1])
+            min_lat = min(min_lat, item[1]['lat_long'][0])
+            max_lat = max(max_lat, item[1]['lat_long'][0])
+
+        print('The main station is at '+ str(main_station_lat_long))
+        print('Latitude ranges from '+ str(min_lat) + ' to ' + str(max_lat))
+        print('Longitude ranges from '+ str(min_long) + ' to ' + str(max_long))
 
         # let's assume cartesian plotting for now.
-        cut_beginning = (-122.389961, 37.5)  # (long, lat) of beginning cut point
-        cut_end = (-121.283277, 36.9)      # (long, lat) of ending cut point
-        cut_width_deg_total = 0.5  # total width of cut in degrees
+        cut_beginning = (-122.389961, 37.29)  # (long, lat) of beginning cut point
+        cut_end = (-121.283277, 37.29)      # (long, lat) of ending cut point
+        cut_width_deg_total = 0.3  # total width of cut in degrees
 
         neighbor_data_multiplot(cut_beginning, cut_end, cut_width_deg_total,
                                 station_neighbor_data_consistent_timebase_with_NaNs)
