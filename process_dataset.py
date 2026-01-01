@@ -401,7 +401,8 @@ def neighbor_data_multiplot(cut_beginning, cut_end, cut_width_deg_total,
             # Draw dashed vertical line from x-axis (min_y) to first datapoint
             plt.plot([distance_along_cut, distance_along_cut], [min_y, first_row['Days_Since_Epoch']], 'k--', linewidth=1)
             # Plot data points: x = distance_along_cut + North * scale, y = Days_Since_Epoch
-            x_vals = distance_along_cut + valid_data['North (m)'] * scale
+            shift = first_row['North (m)'] * scale
+            x_vals = distance_along_cut + (valid_data['North (m)'] - first_row['North (m)']) * scale
             y_vals = valid_data['Days_Since_Epoch']
             plt.scatter(x_vals, y_vals, color=color, s=1, label=station)
     
