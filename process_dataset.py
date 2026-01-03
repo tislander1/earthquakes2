@@ -431,12 +431,32 @@ def neighbor_data_multiplot(cut_beginning, cut_end, cut_width_deg_total,
 
     # cut width:
     cut_width_string = f"{cut_width_deg_total:.2f}"
+
+    pld = reverse_geocode.search([[cut_beginning[1], cut_beginning[0]]])[0]
+    start_place = pld['city'] + ', ' + pld.get('state', '') + ', ' + pld['country']
+    pld = reverse_geocode.search([[cut_end[1], cut_end[0]]])[0]
+    end_place = pld['city'] + ', ' + pld.get('state', '') + ', ' + pld['country']
+    place_string = start_place + ' ➡️➡️➡️ ' + end_place
     
-    plot_component('North (m)', 0.2, 'Change in North (m) over time for stations along '+ cut_width_string + ' deg wide cut', cut_description + ' / North displacement (scaled)', 'north_displacement_plot.png')
-    plot_component('East (m)', 0.2, 'Change in East (m) over time for stations along '+ cut_width_string + ' deg wide cut', cut_description + ' / East displacement (scaled)', 'east_displacement_plot.png')
-    plot_component('Vertical (m)', 1.0, 'Change in Vertical (m) over time for stations along '+ cut_width_string + ' deg wide cut', cut_description + ' / Vertical displacement (scaled)', 'vertical_displacement_plot.png')
+    plot_component('North (m)', 0.2, 'Change in North (m) over time for stations along '+ cut_width_string + ' deg wide cut\n' + place_string, cut_description + ' / North displacement (scaled)', 'north_displacement_plot.png')
+    plot_component('East (m)', 0.2, 'Change in East (m) over time for stations along '+ cut_width_string + ' deg wide cut\n'+ place_string, cut_description + ' / East displacement (scaled)', 'east_displacement_plot.png')
+    plot_component('Vertical (m)', 1.0, 'Change in Vertical (m) over time for stations along '+ cut_width_string + ' deg wide cut\n'+ place_string, cut_description + ' / Vertical displacement (scaled)', 'vertical_displacement_plot.png')
     
-    x = 2
+    # collect a dataframe of station data along the cut section, to be returned.
+    stations_sorted = sorted(station_position_dict.items(), key=lambda item: item[1]['distance_along_cut'])
+    station_table_list_of_dicts = []
+    for item in stations_sorted:
+        x = 2
+        lat = item[1]['lat']
+        long = item[1]['long']
+        pld = nearest_cities_and_states = reverse_geocode.search([[lat,long]])[0]
+        place = pld['city'] + ', ' + pld.get('state', '') + ', ' + pld['country']
+        station_table_list_of_dicts.append({'station': item[0],
+                                            'lat': lat, 'long': long,
+                                            'place': place,
+                                            'x_axis': item[1]['distance_along_cut']})
+    place_df = pd.DataFrame(station_table_list_of_dicts)
+    return place_df
 
 if __name__ == "__main__":
     station_table_ver = 'v1.1' # version of the station locations and velocities table to use.
@@ -458,6 +478,8 @@ if __name__ == "__main__":
     long = -121.8863
     station_to_collect = 'LUTZ' # if get_station_by_lat_long is False, specify the station name here
     max_neighbors_to_collect = 50
+
+    cut_section_data = 'cut_section_data.csv'
 
     station_table_file_path = "station_locations_and_velocities.txt"
     # check if 'station_positions_'+station_table_ver+'.csv' exists.  If it does not, load the station data from the text file.
@@ -541,8 +563,11 @@ if __name__ == "__main__":
         cut_end = (-121.283277, 37.29)      # (long, lat) of ending cut point
         cut_width_deg_total = 0.3  # total width of cut in degrees
 
-        neighbor_data_multiplot(cut_beginning, cut_end, cut_width_deg_total,
+        place_df = neighbor_data_multiplot(cut_beginning, cut_end, cut_width_deg_total,
                                 station_neighbor_data_consistent_timebase_with_NaNs)
+        place_df.to_csv(cut_section_data)
+        
+        x = 2
 
     print('All processing complete.')
     x = 2
